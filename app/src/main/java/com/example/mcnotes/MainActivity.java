@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         notesContainer = findViewById(R.id.notesContainer);
         Button saveButton = findViewById(R.id.saveButton);
 

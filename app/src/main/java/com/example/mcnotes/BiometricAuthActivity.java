@@ -38,7 +38,9 @@ public class BiometricAuthActivity extends AppCompatActivity {
 
     private BiometricPrompt getPrompt() {
         Executor executor = ContextCompat.getMainExecutor(this);
+
         BiometricPrompt.AuthenticationCallback callback = new BiometricPrompt.AuthenticationCallback() {
+
             @Override
             public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
                 super.onAuthenticationError(errorCode, errString);
@@ -49,7 +51,7 @@ public class BiometricAuthActivity extends AppCompatActivity {
             public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
                 super.onAuthenticationSucceeded(result);
                 notifyUser("Access Granted!");
-                Intent intent = new Intent(MainActivity.this, biometrics.class);
+                Intent intent = new Intent(BiometricAuthActivity.this, MainActivity.class);
                 startActivity(intent);
             }
 
