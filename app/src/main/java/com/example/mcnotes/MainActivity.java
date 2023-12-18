@@ -134,6 +134,23 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        builder.setNeutralButton("Edit", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String Title = note.getTitle() ;
+                String Content = note.getContent();
+                View noteView = getLayoutInflater().inflate(R.layout.note_item, null);
+                EditText titleEditText = findViewById(R.id.titleEditText);
+                EditText contentEditText = findViewById(R.id.contentEditText);
+
+                titleEditText.setText(Title);
+                contentEditText.setText(Content);
+                int noteIndex = noteList.indexOf(note);
+                noteList.remove(noteIndex);
+                refreshNoteViews();
+            }
+        });
+
         builder.setNegativeButton("Cancel", null);
         builder.show();
     }
