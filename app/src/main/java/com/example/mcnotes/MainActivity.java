@@ -48,8 +48,9 @@ public class MainActivity extends AppCompatActivity {
                 saveNote();
             }
         });
-        displayNotes();
+
         loadNotesFromPreferences();
+        displayNotes();
     }
 
 
