@@ -7,6 +7,8 @@
     android:orientation="vertical"
     android:padding="16dp"
     tools:context=".MainActivity">
+
+
     <EditText
         android:id="@+id/titleEditText"
         android:layout_width="match_parent"
@@ -49,13 +51,6 @@
 
     </ScrollView>
 
-
-        
-
-
-        
-        
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -63,5 +58,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
 
 </LinearLayout>
