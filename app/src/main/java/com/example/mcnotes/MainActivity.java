@@ -1,8 +1,8 @@
 package com.example.mcnotes;
 
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -11,16 +11,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.biometric.BiometricPrompt;
-import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import java.util.concurrent.Executor;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -29,10 +24,11 @@ public class MainActivity extends AppCompatActivity {
     private static final String KEY_NOTE_COUNT = "NoteCount";
     private LinearLayout notesContainer;
     private List<Note> noteList;
+    private DatabaseHelper userDb = new DatabaseHelper(MainActivity.this);
+    ArrayList<String> noteTitle, notecontent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -42,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
         noteList = new ArrayList<>();
 
+
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -49,34 +46,35 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        loadNotesFromPreferences();
+        // loadNotesFromPreferences();
         displayNotes();
     }
 
 
     private void displayNotes() {
-        for (Note note : noteList){
-            createNoteView(note);
-        }
-    }
+        Cursor cursor = userDb.readAllData();
+        if (cursor.getCount() == 0) {
+            Toast.makeText(this, "no data", Toast.LENGTH_SHORT).show();
 
-    private void loadNotesFromPreferences() {
-        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME,MODE_PRIVATE);
-        int noteCount = sharedPreferences.getInt(KEY_NOTE_COUNT, 0);
+        } else {
 
-        for (int i = 0; i<noteCount; i++){
-            String title = sharedPreferences.getString("note_title_" + i,"");
-            String content = sharedPreferences.getString("note_content_" + i,"");
+            while (cursor.moveToNext()) {
 
-            Note note = new Note();
-            note.setTitle(title);
-            note.setContent(content);
+                String title = cursor.getString(1);
+                String content = cursor.getString(2);
 
-            noteList.add(note);
+                Note note = new Note();
+                note.setTitle(title);
+                note.setContent(content);
+                note.ID=cursor.getInt(0);
+                noteList.add(note);
+                createNoteView(note);
+            }
         }
     }
 
     private void saveNote() {
+
         EditText titleEditText = findViewById(R.id.titleEditText);
         EditText contentEditText = findViewById(R.id.contentEditText);
 
@@ -85,11 +83,13 @@ public class MainActivity extends AppCompatActivity {
 
 
         if (!title.isEmpty() && !content.isEmpty()) {
+
+            userDb.addNote(titleEditText.getText().toString().trim(), contentEditText.getText().toString().trim());
             Note note = new Note();
             note.setTitle(title);
             note.setContent(content);
             noteList.add(note);
-            saveNotesToPreferences();
+
 
             createNoteView(note);
             clearInputFields();
@@ -97,8 +97,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void clearInputFields() {
-        EditText titleEditText  = findViewById(R.id.titleEditText);
-        EditText contentEditText  = findViewById(R.id.contentEditText);
+        EditText titleEditText = findViewById(R.id.titleEditText);
+        EditText contentEditText = findViewById(R.id.contentEditText);
 
         titleEditText.getText().clear();
         contentEditText.getText().clear();
@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
 
         noteView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public boolean onLongClick(View v){
+            public boolean onLongClick(View v) {
                 showDeleteDialog(note);
                 return true;
             }
@@ -130,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
         builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+
                 deleteNoteAndRefresh(note);
             }
         });
@@ -137,17 +138,22 @@ public class MainActivity extends AppCompatActivity {
         builder.setNeutralButton("Edit", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String Title = note.getTitle() ;
+                String Title = note.getTitle();
                 String Content = note.getContent();
                 View noteView = getLayoutInflater().inflate(R.layout.note_item, null);
                 EditText titleEditText = findViewById(R.id.titleEditText);
                 EditText contentEditText = findViewById(R.id.contentEditText);
-
                 titleEditText.setText(Title);
                 contentEditText.setText(Content);
+                userDb.deleteOneRow(note.ID);
+                userDb.updateData(note.ID, Title, Content);
+
+
                 int noteIndex = noteList.indexOf(note);
                 noteList.remove(noteIndex);
+
                 refreshNoteViews();
+
             }
         });
 
@@ -155,10 +161,14 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void deleteNoteAndRefresh(Note note)  {
+    private void deleteNoteAndRefresh(Note note) {
+
+
         int noteIndex = noteList.indexOf(note);
+        userDb.deleteOneRow(note.ID);
+
         noteList.remove(noteIndex);
-        saveNotesToPreferences();
+
         refreshNoteViews();
 
     }
@@ -166,19 +176,5 @@ public class MainActivity extends AppCompatActivity {
     private void refreshNoteViews() {
         notesContainer.removeAllViews();
         displayNotes();
-    }
-
-    private void saveNotesToPreferences() {
-        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-
-        editor.putInt(KEY_NOTE_COUNT, noteList.size());
-        for (int i = 0; i < noteList.size(); i++)
-        {
-            Note note = noteList.get(i);
-            editor.putString("note_title_" + i, note.getTitle());
-            editor.putString("note_content_" + i, note.getContent());
-        }
-        editor.apply();
     }
 }
